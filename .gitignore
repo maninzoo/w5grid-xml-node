@@ -1,0 +1,6 @@
+.project
+.DS_Store
+*.db
+.idea/
+components/
+node_modules/
