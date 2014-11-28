@@ -7,7 +7,6 @@ router.get('/', function(req, res) {
 });
 
 router.post('/', function(req, res) {
-  debugger;
   res.set( 'Content-Type', 'application/xml' );
   res.send( '<response></response>' );
 });
