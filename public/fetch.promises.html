@@ -126,76 +126,75 @@
           "web": "http://www.chemeljameslcpa.com"
         }];
 
-      grid1.fetch( {
-        reset: true,
-        contentType: 'application/xml',
-        data: { request: 'fetch' },
-//        data: data,
-//        nodeName: 'CCCEA17',
-        converter: {
-          json2xml_str: proworksConverter.json2xml_str,
-          xml2json: proworksConverter.xml2json
-        },
-        success: function ( collection, response, options ) {
-//          debugger;
-          console.log('success');
-        },
-        error: function ( collection, response, options ) {
-          console.log('error');
-          debugger;
-        }
+//      dataCols.on( 'request', function() {
+//        console.log('request');
+//        debugger;
+//      });
+
+      getFetcher = function( type, idx ) {
+        var lookup = {
+              collection: function( resolve, reject ) {
+                grid1.fetch( {
+                  reset: true,
+                  contentType: 'application/xml',
+                  data: { work: 'fetch', target: 'all' },
+//                  data: data,
+                  nodeName: 'request',
+                  converter: {
+                    json2xml_str: proworksConverter.json2xml_str,
+                    xml2json: proworksConverter.xml2json
+                  },
+                  success: function ( collection, response, options ) {
+                    console.log('success');
+                    resolve( response );
+                  },
+                  error: function ( collection, response, options ) {
+                    console.log('error');
+                    debugger;
+                    reject( Error( "[" + collection.url + "] " + response.statusText ) );
+                  }
+                });
+              },
+              model: function( resolve, reject, idx ) {
+                grid1.fetch( 0, {
+                  reset: true,
+                  contentType: 'application/xml',
+                  data: { work: 'fetch', target: 0 },
+                  nodeName: 'request',
+                  converter: {
+                    json2xml_str: proworksConverter.json2xml_str,
+                    xml2json: proworksConverter.xml2json
+                  },
+                  success: function ( collection, response, options ) {
+                    console.log('success');
+                    resolve( response );
+                  },
+                  error: function ( collection, response, options ) {
+                    console.log('error');
+                    debugger;
+                    reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
+                  }
+                });
+              }
+            },
+            def = function() {};
+
+        return new Promise( function( resolve, reject ) {
+          lookup[type] ? lookup[type]( resolve, reject, idx ) : def();
+        });
+      };
+
+      getFetcher('collection').then( function(response) {
+        console.log( 'SUCCESS', response.length );
+      }, function(error) {
+        console.error( 'FAIL', error );
+      }).then( function (response) {
+        grid1.cell(0,0).set('data', 'Ruud');
+        console.log( 'firstName is changed', grid1.cell(0,0).get('data') );
+      }).then( function (response) {
+        return getFetcher('model', 0);
       });
-
-//      dataCols.on( 'request', function() {
-//        console.log('request');
-//        debugger;
-//      });
-
-//      getFetcher = function( type, idx ) {
-//        var lookup = {
-//              collection: function( resolve, reject ) {
-//                dataCols.fetch( { reset: true,
-//                  success: function ( collection, response, options ) {
-//                    resolve( response );
-//                  },
-//                  error: function ( collection, response, options ) {
-//                    reject( Error( "[" + collection.url + "] " + response.statusText ) );
-//                  }
-//                });
-//              },
-//              model: function( resolve, reject, idx ) {
-//                dataCols.at(idx).fetch({
-//                  success: function ( model, response, options ) {
-//                    resolve( response );
-//                  },
-//                  error: function ( model, response, options ) {
-//                    reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
-//                  }
-//                });
-//              }
-//            },
-//            def = function() {};
-//
-//        return new Promise( function( resolve, reject ) {
-//          lookup[type] ? lookup[type]( resolve, reject, idx ) : def();
-//        });
-//      };
-
-//      dataCols.on( 'request', function() {
-//        console.log('request');
-//        debugger;
-//      });
-
-//      getFetcher('collection').then( function(response) {
-//        console.log( 'SUCCESS', response.length );
-//      }, function(error) {
-//        console.error( 'FAIL', error );
-//      }).then( function (response) {
-//        grid1.cell(0,0).set('data', 'Ruud');
-//        console.log( 'firstName is changed', grid1.cell(0,0).get('data') );
-//      }).then( function (response) {
-//        return getFetcher('model', 0);
-//      }).then( function (response) {
+// .then( function (response) {
 //        console.log( 'firstName is restored', grid1.cell(0,0).get('data') );
 //
 //        data = { phone1: '111-111-1111', phone2: '222-222-2222' };
