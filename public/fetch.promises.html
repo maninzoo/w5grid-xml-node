@@ -12,6 +12,7 @@
     <script src="backbone/backbone.js"></script>
     <script src="x2js/xml2json.js"></script>
     <script src="javascripts/w5.js"></script>
+    <script src="javascripts/proworksConverter.js"></script>
     <script type="text/javascript">
       var getFetcher,
           data,
@@ -95,22 +96,105 @@
             }
         }).render();
 
+      data = [
+        {
+          "first_name": "James",
+          "last_name": "Butt",
+          "company_name": "Benton, John B Jr",
+          "address": "6649 N Blue Gum St",
+          "city": "New Orleans",
+          "county": "Orleans",
+          "state": "LA",
+          "zip": "70116",
+          "phone1": "504-621-8927",
+          "phone2": "504-845-1427",
+          "email": "jbutt@gmail.com",
+          "web": "http://www.bentonjohnbjr.com"
+        },
+        {
+          "first_name": "Art",
+          "last_name": "Venere",
+          "company_name": "Chemel, James L Cpa",
+          "address": "8 W Cerritos Ave #54",
+          "city": "Bridgeport",
+          "county": "Gloucester",
+          "state": "NJ",
+          "zip": "8014",
+          "phone1": "856-636-8749",
+          "phone2": "856-264-4130",
+          "email": "art@venere.org",
+          "web": "http://www.chemeljameslcpa.com"
+        }];
+
       grid1.fetch( {
         reset: true,
         contentType: 'application/xml',
         data: { request: 'fetch' },
-        // converter: {
-        //   json2xml_str: function( data, options ) {
-        //     debugger;
-        //     return '<request/>';
-        //   },
-        //   xml2json: function( data, options ) {
-        //     debugger;
-        //     return { response: 'success' };
-        //   }
-        // },
+//        data: data,
+//        nodeName: 'CCCEA17',
+        converter: {
+          json2xml_str: proworksConverter.json2xml_str,
+//            function( data, options ) {
+//            var singular = !_.isArray(data),
+//                result = singular ? data : { vector: { data: [] } },
+//                dataList,
+//                nodeName,
+//                x2js;
+//
+//            options = options || {};
+//
+//            if ( options.defaultXMLConverter ) {
+//              x2js = options.defaultXMLConverter;
+//            }
+//
+//            if ( !singular ) {
+//              dataList = result.vector.data;
+//              nodeName = options.nodeName ? options.nodeName : 'element';
+//
+//              _.reduce( data, function( memo, item ) {
+//                var nodeWrapper = {};
+//                _.each( item, function( value, key, list ) {
+//                  list[key] = { _value: value };
+//                });
+//                nodeWrapper[nodeName] = item;
+//                memo.push( nodeWrapper );
+//                return memo;
+//              }, dataList, this );
+//            }
+//
+//            return x2js ? x2js.json2xml_str(result) : '<request/>';
+//          },
+          xml2json: proworksConverter.xml2json
+//            function( data, options ) {
+//            var result,
+//                singular,
+//                x2js;
+//
+//            if ( options.defaultXMLConverter ) {
+//              x2js = options.defaultXMLConverter;
+//
+//              result = x2js.xml2json( data );
+//              singular = !(result.vector && result.vector.data) ? true : _.isArray(result.vector.data) ? false : true;
+//
+//              if ( !singular ) {
+//                result = result.vector.data;
+//                result = _.map( result, function( item, idx, list ) {
+//                  list[idx] = item[_.keys(item)[0]];
+//                  _.each( list[idx], function( value, key, obj ) {
+//                    obj[key] = value._value;
+//                  });
+//                  return list[idx];
+//                });
+//              }
+//            } else {
+//              result = { response: null };
+//            }
+//
+//            return result;
+//          }
+        },
         success: function ( collection, response, options ) {
-          debugger;
+//          debugger;
           console.log('success');
         },
         error: function ( collection, response, options ) {
