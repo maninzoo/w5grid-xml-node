@@ -1,4 +1,13 @@
 var proworksConverter = ( function() {
+  var convertToValueAttr = function( model, nodeName ) {
+    var nodeWrapper = {};
+    _.each( model, function( value, key, obj ) {
+      obj[key] = { _value: value };
+    });
+    nodeWrapper[nodeName] = model;
+    return nodeWrapper;
+  };
+
   var json2xml_str = function( data, options ) {
     var singular = !_.isArray(data),
         result = singular ? data : { vector: { data: [] } },
@@ -12,22 +21,27 @@ var proworksConverter = ( function() {
       x2js = options.defaultXMLConverter;
     }
 
-    if ( !singular ) {
+    nodeName = options.nodeName ? options.nodeName : 'element';
+
+    if ( singular ) {
+      result = convertToValueAttr( result, nodeName );
+    } else {
       dataList = result.vector.data;
-      nodeName = options.nodeName ? options.nodeName : 'element';
 
       _.reduce( data, function( memo, item ) {
-        var nodeWrapper = {};
-        _.each( item, function( value, key, list ) {
-          list[key] = { _value: value };
-        });
-        nodeWrapper[nodeName] = item;
-        memo.push( nodeWrapper );
+        memo.push( convertToValueAttr( item, nodeName ) );
         return memo;
       }, dataList, this );
     }
 
     return x2js ? x2js.json2xml_str(result) : '<request/>';
+  };
+
+  var convertFromValueAttr = function( model ) {
+    _.each( model, function( value, key, obj ) {
+      obj[key] = value._value;
+    });
+    return model;
   };
 
   var xml2json = function( data, options ) {
@@ -41,13 +55,14 @@ var proworksConverter = ( function() {
       result = x2js.xml2json( data );
       singular = !(result.vector && result.vector.data) ? true : _.isArray(result.vector.data) ? false : true;
 
-      if ( !singular ) {
+      if ( singular ) {
+        result = result[_.keys(result)[0]];
+        convertFromValueAttr(result);
+      } else {
         result = result.vector.data;
         result = _.map( result, function( item, idx, list ) {
           list[idx] = item[_.keys(item)[0]];
-          _.each( list[idx], function( value, key, obj ) {
-            obj[key] = value._value;
-          });
+          convertFromValueAttr(list[idx]);
           return list[idx];
         });
       }
