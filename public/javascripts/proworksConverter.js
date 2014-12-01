@@ -34,6 +34,8 @@ var proworksConverter = ( function() {
       }, dataList, this );
     }
 
+    _.extend( result[_.keys(result)[0]], options.rootAttrs );
+
     return x2js ? x2js.json2xml_str(result) : '<request/>';
   };
 

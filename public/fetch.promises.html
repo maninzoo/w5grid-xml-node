@@ -137,7 +137,6 @@
                 grid1.fetch( _.defaults( {
                   reset: true,
                   contentType: 'application/xml',
-                  data: { work: 'fetch', target: 'all' },
                   converter: {
                     json2xml_str: proworksConverter.json2xml_str,
                     xml2json: proworksConverter.xml2json
@@ -180,28 +179,48 @@
         });
       };
 
-      getFetcher( 'collection', null, { nodeName: 'request' } ).then( function(response) {
-        console.log( 'SUCCESS', response.length );
-      }, function(error) {
-        console.error( 'FAIL', error );
+      getFetcher( 'collection', null, {
+        nodeName: 'request',
+        data: { target: 'all' },
+        rootAttrs: {
+          _task: 'DummyTask',
+          _action: 'fetch'
+        }
+      }).then( function(response) {
+          console.log( 'SUCCESS', response.length );
+        }, function(error) {
+          console.error( 'FAIL', error );
       }).then( function (response) {
         grid1.cell(0,0).set('data', 'Ruud');
         console.log( 'firstName is changed', grid1.cell(0,0).get('data') );
       }).then( function (response) {
         return getFetcher( 'model', 0, {
           nodeName: 'request',
-          data: { work: 'fetch', target: 0 }
+          data: { target: 0 },
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'fetch'
+          }
         } );
+      }).then( function (response) {
+        console.log( 'firstName is restored', grid1.cell(0,0).get('data') );
+
+        data = { phone1: '111-111-1111', phone2: '222-222-2222' };
+        grid1.row(0).set( 'data', data, {
+          save: true,
+          saved: true,
+          contentType: 'application/xml',
+          nodeName: 'CCCEA17',
+          converter: {
+            json2xml_str: proworksConverter.json2xml_str,
+            xml2json: proworksConverter.xml2json
+          }
+        } );
+        console.log( 'change phone1 and phone2' );
+
+//        return getFetcher('model', 0);
       });
 // .then( function (response) {
-//        console.log( 'firstName is restored', grid1.cell(0,0).get('data') );
-//
-//        data = { phone1: '111-111-1111', phone2: '222-222-2222' };
-//        grid1.row(0).set( 'data', data, { save: true, saved: true } );
-//        console.log( 'change phone1 and phone2' );
-//
-//        return getFetcher('model', 0);
-//      }).then( function (response) {
 //        console.log( 'fetch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
 //
 //        data = { phone1: '504-621-8927', phone2: '504-845-1427' };

@@ -8,23 +8,26 @@ router.get('/', function(req, res) {
 });
 
 router.post('/', function(req, res) {
-  var responseBody = '';
+  var responseBody = '',
+      root = req.body[_.keys(req.body)[0]];
+
+  console.log( 'TASK[' + root.$.task + ']' );
 
   res.set( 'Content-Type', 'application/xml' );
 
-  if ( req.body.request.work[0].$.value === 'fetch' ) {
+  if ( root.$.action === 'fetch' ) {
     var data = [
       "<CCCEA17><first_name value='James'/><last_name value='Butt'/><company_name value='Benton, John B Jr'/><address value='6649 N Blue Gum St'/><city value='New Orleans'/><county value='Orleans'/><state value='LA'/><zip value='70116'/><phone1 value='504-621-8927'/><phone2 value='504-845-1427'/><email value='jbutt@gmail.com'/><web value='http:&#x2F;&#x2F;www.bentonjohnbjr.com'/></CCCEA17>",
       "<CCCEA17><first_name value='Art'/><last_name value='Venere'/><company_name value='Chemel, James L Cpa'/><address value='8 W Cerritos Ave #54'/><city value='Bridgeport'/><county value='Gloucester'/><state value='NJ'/><zip value='8014'/><phone1 value='856-636-8749'/><phone2 value='856-264-4130'/><email value='art@venere.org'/><web value='http:&#x2F;&#x2F;www.chemeljameslcpa.com'/></CCCEA17>"
     ];
 
-    if ( req.body.request.target[0].$.value === 'all' ) {
+    if ( root.target[0].$.value === 'all' ) {
       responseBody += '<vector>';
       responseBody = _.reduce( data, function( memo, item ) {
         return memo += '<data>' + item + '</data>';
       }, responseBody );
       responseBody += '</vector>';
-    } else if ( req.body.request.target[0].$.value === '0' ) {
+    } else if ( root.target[0].$.value === '0' ) {
       responseBody = data[0];
     }
   } else {
