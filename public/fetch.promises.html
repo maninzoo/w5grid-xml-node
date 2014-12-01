@@ -131,15 +131,13 @@
 //        debugger;
 //      });
 
-      getFetcher = function( type, idx ) {
+      getFetcher = function( type, idx, options ) {
         var lookup = {
-              collection: function( resolve, reject ) {
-                grid1.fetch( {
+              collection: function( resolve, reject, idx, options ) {
+                grid1.fetch( _.defaults( {
                   reset: true,
                   contentType: 'application/xml',
                   data: { work: 'fetch', target: 'all' },
-//                  data: data,
-                  nodeName: 'request',
                   converter: {
                     json2xml_str: proworksConverter.json2xml_str,
                     xml2json: proworksConverter.xml2json
@@ -153,14 +151,12 @@
                     debugger;
                     reject( Error( "[" + collection.url + "] " + response.statusText ) );
                   }
-                });
+                }, options ) );
               },
-              model: function( resolve, reject, idx ) {
-                grid1.fetch( 0, {
+              model: function( resolve, reject, idx, options ) {
+                grid1.fetch( idx, _.defaults( {
                   reset: true,
                   contentType: 'application/xml',
-                  data: { work: 'fetch', target: 0 },
-                  nodeName: 'request',
                   converter: {
                     json2xml_str: proworksConverter.json2xml_str,
                     xml2json: proworksConverter.xml2json
@@ -174,17 +170,17 @@
                     debugger;
                     reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
                   }
-                });
+                }, options ) );
               }
             },
             def = function() {};
 
         return new Promise( function( resolve, reject ) {
-          lookup[type] ? lookup[type]( resolve, reject, idx ) : def();
+          lookup[type] ? lookup[type]( resolve, reject, idx, options ) : def();
         });
       };
 
-      getFetcher('collection').then( function(response) {
+      getFetcher( 'collection', null, { nodeName: 'request' } ).then( function(response) {
         console.log( 'SUCCESS', response.length );
       }, function(error) {
         console.error( 'FAIL', error );
@@ -192,7 +188,10 @@
         grid1.cell(0,0).set('data', 'Ruud');
         console.log( 'firstName is changed', grid1.cell(0,0).get('data') );
       }).then( function (response) {
-        return getFetcher('model', 0);
+        return getFetcher( 'model', 0, {
+          nodeName: 'request',
+          data: { work: 'fetch', target: 0 }
+        } );
       });
 // .then( function (response) {
 //        console.log( 'firstName is restored', grid1.cell(0,0).get('data') );
