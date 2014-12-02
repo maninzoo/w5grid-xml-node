@@ -41,15 +41,18 @@ var proworksConverter = ( function() {
 
   var convertFromValueAttr = function( model ) {
     _.each( model, function( value, key, obj ) {
-      obj[key] = value._value;
+      if ( _.isObject(value) ) {
+        obj[key] = value._value;
+      }
     });
     return model;
   };
 
   var xml2json = function( data, options ) {
     var result,
-      singular,
-      x2js;
+        value,
+        singular,
+        x2js;
 
     if ( options.defaultXMLConverter ) {
       x2js = options.defaultXMLConverter;
@@ -58,8 +61,11 @@ var proworksConverter = ( function() {
       singular = !(result.vector && result.vector.data) ? true : _.isArray(result.vector.data) ? false : true;
 
       if ( singular ) {
-        result = result[_.keys(result)[0]];
-        convertFromValueAttr(result);
+        value = result[_.keys(result)[0]];
+        if ( _.isObject(value) ) {
+          result = value;
+          convertFromValueAttr(result);
+        }
       } else {
         result = result.vector.data;
         result = _.map( result, function( item, idx, list ) {
