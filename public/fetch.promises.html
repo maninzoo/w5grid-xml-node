@@ -286,8 +286,6 @@
               _action: 'create'
             }, success: function ( model, response, options ) {
               console.log( 'create a Row ', _.omit( response, '_id' ) );
-              // 삭제 대상
-              grid1.refresh();
               resolve();
             }
           }, commonConf ) );
