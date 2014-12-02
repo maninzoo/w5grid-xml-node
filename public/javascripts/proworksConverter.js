@@ -1,42 +1,60 @@
 var proworksConverter = ( function() {
-  var convertToValueAttr = function( model, nodeName ) {
-    var nodeWrapper = {};
+  var x2js;
+
+  var convertToValueAttr = function( model, options ) {
     _.each( model, function( value, key, obj ) {
-      obj[key] = { _value: value };
+      if ( _.isArray(value) || _.isObject(value) ) {
+        options.nodeName = key;
+        obj[key] = json2xml_str( value, options, true );
+      } else {
+        obj[key] = { _value: value };
+      }
     });
-    nodeWrapper[nodeName] = model;
+    return model;
+  };
+
+  var setWrapper = function( obj, nodeName, options ) {
+    var nodeWrapper = {};
+    nodeWrapper[nodeName] = convertToValueAttr( obj, options );
     return nodeWrapper;
   };
 
-  var json2xml_str = function( data, options ) {
+  var json2xml_str = function( data, options, isNotRoot ) {
     var singular = !_.isArray(data),
         result = singular ? data : { vector: { data: [] } },
-        dataList,
         nodeName,
-        x2js;
+        dataList;
 
-    options = options || {};
+    if ( !isNotRoot ) {
+      options = options || {};
 
-    if ( options.defaultXMLConverter ) {
-      x2js = options.defaultXMLConverter;
+      if ( options.defaultXMLConverter ) {
+        x2js = options.defaultXMLConverter;
+      }
     }
 
-    nodeName = options.nodeName ? options.nodeName : 'element';
+    nodeName = options.nodeName ? options.nodeName : 'message';
 
     if ( singular ) {
-      result = convertToValueAttr( result, nodeName );
+      if ( isNotRoot ) {
+        convertToValueAttr( result, options );
+      } else {
+        result = setWrapper( result, nodeName, options );
+      }
     } else {
       dataList = result.vector.data;
 
       _.reduce( data, function( memo, item ) {
-        memo.push( convertToValueAttr( item, nodeName ) );
+        memo.push( setWrapper( item, nodeName + '_ele', options ) );
         return memo;
       }, dataList, this );
     }
 
-    _.extend( result[_.keys(result)[0]], options.rootAttrs );
-
-    return x2js ? x2js.json2xml_str(result) : '<request/>';
+    if ( !isNotRoot ) {
+      _.extend( result[_.keys( result )[0]], options.rootAttrs );
+      result = x2js ? x2js.json2xml_str(result) : '<request/>';
+    }
+    return result;
   };
 
   var convertFromValueAttr = function( model ) {
@@ -51,8 +69,7 @@ var proworksConverter = ( function() {
   var xml2json = function( data, options ) {
     var result,
         value,
-        singular,
-        x2js;
+        singular;
 
     if ( options.defaultXMLConverter ) {
       x2js = options.defaultXMLConverter;

@@ -53,7 +53,7 @@
   background: transparent url("../images/transparent.gif") repeat 0 0;
   display: block;
   position: absolute;
-  top: 0px;
+  top: -1px;
   right: 0px;
   text-indent: -9999px;
   z-index: 16;
@@ -205,7 +205,6 @@
 }
 .gGrid-headerLabel .gGrid-colMenu.open .w5-dropdown-menu {
   width: 340px;
-  max-height: 260px;
   display: block;
   position: absolute;
   top: 27px;
@@ -745,7 +744,6 @@
 .gGrid .gGrid-setTable {
   padding-bottom: 10px;
   width: 100%;
-  min-height: 312px;
   position: relative;
   overflow: hidden;
 }

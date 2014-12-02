@@ -3,7 +3,7 @@
   <head>
     <title>W5 - Sync Promises Test</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="../components/w5/dist/css/w5.min.css">
+    <link rel="stylesheet" href="stylesheets/w5.css">
   </head>
   <body style="border:0; margin:0">
     <div id='grid1'></div>
@@ -12,12 +12,18 @@
     <script src="backbone/backbone.js"></script>
     <script src="x2js/xml2json.js"></script>
     <script src="javascripts/w5.js"></script>
+    <script src="javascripts/proworksConverter.js"></script>
     <script type="text/javascript">
       var getSyncer,
+          commonConf,
           data,
-          Model = Backbone.Model.extend( { idAttribute: "_id" } ),
-          List = Backbone.Collection.extend( { model: Model, url: '/people', compoundURL: '/mixed' } ),
-          dataCols = new List(),
+          Model = Backbone.Model.extend( {
+            idAttribute: "first_name",
+            url: function() {
+              return '/users2';
+            }
+          } ),
+          List = Backbone.Collection.extend( { model: Model, url: '/users2', compoundURL: '/users2' } ),
           grid1 = new w5.Grid({
             el : "#grid1",
             option: {
@@ -26,7 +32,9 @@
               caption : "Promises",
               rowNum : 10
             },
-            collection : dataCols,
+            collection : new List(),
+            emulateHTTP: true,
+            xmlConverter: new X2JS(),
             colModel : [
               {
                 width: 150,
@@ -95,27 +103,47 @@
             }
         }).render();
 
+      commonConf = {
+        contentType: 'application/xml',
+        converter: {
+          json2xml_str: proworksConverter.json2xml_str,
+          xml2json: proworksConverter.xml2json
+        }
+      };
+
       getSyncer = function( type, options ) {
         var lookup = {
           fetch: function( resolve, reject ) {
-            dataCols.fetch( { reset: true,
+            grid1.fetch( _.extend( {
+              reset: true,
+              nodeName: 'request',
+              data: { target: 'all' },
+              rootAttrs: {
+                _task: 'DummyTask',
+                _action: 'fetch'
+              },
               success: function ( collection, response, options ) {
                 resolve( response );
               },
               error: function ( collection, response, options ) {
-                reject( Error( "[" + collection.url + "] " + response.statusText ) );
+                reject( Error( "[" + collection.url + "]" ) );
               }
-            });
+            }, commonConf, options ) );
           },
           sync: function( resolve, reject, options ) {
-            grid1.syncData( _.extend( options, { reset: true,
-              success: function ( returnData, status, options ) {
-                resolve( returnData.message );
+            grid1.syncData( _.extend( options, {
+              reset: true,
+              rootAttrs: {
+                _task: 'DummyTask',
+                _action: 'sync'
+              },
+              success: function ( response, status, options ) {
+                resolve( response._result );
               },
               error: function ( collection, response, options ) {
-                reject( Error( "[" + this.url + "] " + collection.statusText ) );
+                reject( Error( "[" + this.url + "]" ) );
               }
-            }));
+            }, commonConf ) );
           }
         },
         def = function() {};
@@ -155,6 +183,18 @@
         return getSyncer( 'sync', { pick: true, saved: true, modified: true, excludeUpdate: true, afterProcess: true } );
       }).then( function (response) {
         console.log( response );
+
+        return getSyncer( 'fetch', {
+          reset: false,
+          nodeName: 'request',
+          data: { target: 'all' },
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'complex'
+          }
+        } );
+      }).then( function(response) {
+        console.log( JSON.stringify(response) );
       });
     </script>
   </body>
