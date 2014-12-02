@@ -15,8 +15,17 @@
     <script src="javascripts/proworksConverter.js"></script>
     <script type="text/javascript">
       var getFetcher,
+          commonConf,
           data,
-          List = Backbone.Collection.extend( { model: Backbone.Model.extend( { idAttribute: "_id" } ), url: '/users' } ),
+          List = Backbone.Collection.extend( {
+            model: Backbone.Model.extend( {
+              idAttribute: "first_name",
+              url: function() {
+                return '/users';
+              }
+            } ),
+            url: '/users' } ),
+//          List = Backbone.Collection.extend( { url: '/users' } ),
           grid1 = new w5.Grid({
             el : "#grid1",
             option: {
@@ -179,6 +188,15 @@
         });
       };
 
+      commonConf = {
+        contentType: 'application/xml',
+        nodeName: 'CCCEA17',
+        converter: {
+          json2xml_str: proworksConverter.json2xml_str,
+          xml2json: proworksConverter.xml2json
+        }
+      };
+
       getFetcher( 'collection', null, {
         nodeName: 'request',
         data: { target: 'all' },
@@ -206,43 +224,87 @@
         console.log( 'firstName is restored', grid1.cell(0,0).get('data') );
 
         data = { phone1: '111-111-1111', phone2: '222-222-2222' };
-        grid1.row(0).set( 'data', data, {
+        grid1.row(0).set( 'data', data, _.extend( {
           save: true,
           saved: true,
-          contentType: 'application/xml',
-          nodeName: 'CCCEA17',
-          converter: {
-            json2xml_str: proworksConverter.json2xml_str,
-            xml2json: proworksConverter.xml2json
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'update'
+          },
+          success: function( model, response, options ) {
+            console.log( 'first update phone number result = ' + response._result );
           }
-        } );
+        }, commonConf ) );
         console.log( 'change phone1 and phone2' );
 
-//        return getFetcher('model', 0);
+        return getFetcher( 'model', 0, {
+          nodeName: 'request',
+          data: { target: 0 },
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'fetch'
+          }
+        } );
+      }).then( function (response) {
+        console.log( 'fetch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
+
+        data = { phone1: '504-621-8927', phone2: '504-845-1427' };
+        grid1.row(0).set( 'data', data, _.extend( {
+          save: true,
+          saved: true,
+          pick: ['phone1', 'phone2'],
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'update'
+          },
+          success: function( model, response, options ) {
+            console.log( 'second update phone number result = ' + response._result );
+          }
+        }, commonConf ) );
+
+        return getFetcher( 'model', 0, {
+          nodeName: 'request',
+          data: { target: 0 },
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'fetch'
+          }
+        } );
+      }).then( function (response) {
+        console.log( 'patch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
+
+        data = { "first_name": "shye", "last_name": "lee", "company_name": "inswave",
+                 "address": "guro", "city": "seoul", "county": "korea", "state": "guro", "zip": "1234",
+                 "phone1": "123-456-1234", "phone2": "789-123-4567",
+                 "email": "shye0919@inswave.com", "web": "http://www.inswave.com" };
+
+        return new Promise( function( resolve, reject ) {
+          grid1.addRow( 0, data, _.extend( {
+            save: true,
+            rootAttrs: {
+              _task: 'DummyTask',
+              _action: 'create'
+            }, success: function ( model, response, options ) {
+              console.log( 'create a Row ', _.omit( response, '_id' ) );
+              // 삭제 대상
+              grid1.refresh();
+              resolve();
+            }
+          }, commonConf ) );
+        } );
+
+      }).then( function (response) {
+          grid1.removeRow( 1, _.extend( {
+            destroy: true,
+            rootAttrs: {
+              _task: 'DummyTask',
+              _action: 'delete'
+            },
+            success: function ( model, response, options ) {
+              console.log( 'removed the Row ', response._result );
+            }
+          }, commonConf ) );
       });
-// .then( function (response) {
-//        console.log( 'fetch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
-//
-//        data = { phone1: '504-621-8927', phone2: '504-845-1427' };
-//        grid1.row(0).set( 'data', data, { save: true, saved: true, pick: ['phone1', 'phone2'] } );
-//
-//        return getFetcher('model', 0);
-//      }).then( function (response) {
-//        console.log( 'patch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
-//
-//        data = { "first_name": "shye", "last_name": "lee", "company_name": "inswave",
-//                 "address": "guro", "city": "seoul", "county": "korea", "state": "guro", "zip": "1234",
-//                 "phone1": "123-456-1234", "phone2": "789-123-4567",
-//                 "email": "shye0919@inswave.com", "web": "http://www.inswave.com" };
-//
-//        grid1.addRow( 0, data, { save: true, success: function ( model, response, options ) {
-//          console.log( 'create a Row ', _.omit( response, '_id' ) );
-//        }} );
-//      }).then( function (response) {
-//        grid1.removeRow( 1, { destroy: true, success: function ( model, response, options ) {
-//          console.log( 'removed the Row ', response.result );
-//        }});
-//      });
     </script>
   </body>
 </html>
