@@ -5,7 +5,7 @@
  * Copyright 2013 Inswave Foundation and other contributors
  * Released under the LGPLv3.0 license
  *
- * Date: 2014-11-28
+ * Date: 2014-12-03
  */
 
 (function(root, factory) {
@@ -742,6 +742,15 @@ _.extend( ViewModel.prototype, {
       this.view.trigger( 'sort', { type: "sort" }, sortInfo );
     }
   },
+  wrapRoot: function( data, options ) {
+    var wrapper;
+    if ( options.rootName ) {
+      wrapper = {};
+      wrapper[options.rootName] = data;
+      data = wrapper;
+    }
+    return data;
+  },
   convertJSONtoXML: function( model, options ) {
     var data;
 
@@ -749,12 +758,17 @@ _.extend( ViewModel.prototype, {
     if ( options.data ) {
       data = options.data;
     } else {
-      data = model.toJSON();
+      if ( _.isString(model) ) {
+        data = JSON.parse(model);
+      } else {
+        data = model.toJSON();
+      }
     }
-
+debugger;
     if ( options.converter ) {
-      data = options.converter.json2xml_str.call( this, data, options );
+      data = options.converter.json2xml_str.call( options.converter.json2xml_str, data, options );
     } else if ( this.view.options.xmlConverter ) {
+      data = this.wrapRoot( data, options );
       data = this.view.options.xmlConverter.json2xml_str(data);
     }
 
@@ -768,13 +782,18 @@ _.extend( ViewModel.prototype, {
     options.contentType = options.contentType || 'application/xml';
     options.dataType = options.dataType || 'xml';
     options.processData = false;
+
+    if ( this.view.options.xmlConverter ) {
+      options.defaultXMLConverter = this.view.options.xmlConverter;
+    }
+
     options.data = this.convertJSONtoXML( model, options );
     options.converters = {
       "text xml": function(value) {
         value = $.parseXML(value);
 
         if ( options.converter ) {
-          value = options.converter.xml2json.call( that, value, options );
+          value = options.converter.xml2json.call( options.converter.xml2json, value, options );
         } else if ( that.view.options.xmlConverter ) {
           value = that.view.options.xmlConverter.xml2json(value);
         }
@@ -794,6 +813,7 @@ _.extend( ViewModel.prototype, {
       }
 
       if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        debugger;
         options = this.sendXML( model, options );
       }
     }
@@ -822,6 +842,13 @@ _.extend( ViewModel.prototype, {
         }
       };
 
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        if ( options.patch ) {
+          options.data = data;
+        }
+        options = this.sendXML( model, options );
+      }
+
       this.collection.at( idx ).save( data, options );
     }
   },
@@ -830,6 +857,10 @@ _.extend( ViewModel.prototype, {
         success = options.success;
 
     if ( !_.isArray ( model ) ) {
+      if ( options.contentType && options.contentType.indexOf('xml') > -1 ) {
+        options = this.sendXML( model, options );
+      }
+
       options.success = function ( modelCompleted, resp ) {
         _.each( vModel.collection.__removeModels, function ( element, index, list ) {
           if ( modelCompleted.id === element.id ) {
@@ -911,6 +942,10 @@ _.extend( ViewModel.prototype, {
           return data;
         }
       } );
+    }
+
+    if ( options && options.contentType && options.contentType.indexOf('xml') > -1 ) {
+      options = this.sendXML( JSON.stringify( dummy.toJSON() ), options );
     }
 
     options.success = function ( model, resp ) {
@@ -1964,7 +1999,9 @@ var GridProto = {
   drawPartial: function(idx) {
     this.wholeTblHeight = this.getWholeTblHeight();
 
-    if ( this.rowTop !== 0 && this.rowTop > idx || this.getRowLength() - this.viewModel.getOption('rowNum') < idx ) {
+    if ( this.viewModel.getDataLength() < this.viewModel.getOption("rowNum") ) {
+      this.setResize();
+    } else if ( this.rowTop !== 0 && this.rowTop > idx || this.getRowLength() - this.viewModel.getOption('rowNum') < idx ) {
       this.viewModel.setOption( 'scrollTop', idx * 20 );
     } else {
       this.drawTbody( idx );
