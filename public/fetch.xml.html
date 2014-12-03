@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>W5 - Fetch Promises Test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="stylesheets/w5.css">
+  </head>
+  <body style="border:0; margin:0">
+    <div id='grid1'></div>
+    <script src="jquery/dist/jquery.js"></script>
+    <script src="underscore/underscore.js"></script>
+    <script src="backbone/backbone.js"></script>
+    <script src="x2js/xml2json.js"></script>
+    <script src="javascripts/w5.js"></script>
+    <script src="javascripts/proworksConverter.js"></script>
+    <script type="text/javascript">
+      var getFetcher,
+          commonConf,
+          data,
+          List = Backbone.Collection.extend( {
+            model: Backbone.Model.extend( {
+              idAttribute: "first_name",
+              url: function() {
+                return '/users';
+              }
+            } ),
+            url: '/users' } ),
+          grid1 = new w5.Grid({
+            el : "#grid1",
+            option: {
+              width : "650px",
+              height : "400px",
+              caption : "Promises",
+              rowNum : 10
+            },
+            collection : new List(),
+            emulateHTTP: true,
+            xmlConverter: new X2JS(),
+            colModel : [
+              {
+                width: 150,
+                id: 'first_name'
+              },
+              {
+                width: 150,
+                id: 'last_name'
+              },
+              {
+                width: 150,
+                headerLabel: 'company_name'
+              },
+              {
+                width: 150,
+                headerLabel: 'address'
+              },
+              {
+                width: 150,
+                id: 'city'
+              },
+              {
+                width: 150,
+                id: 'county'
+              },
+              {
+                width: 150,
+                id: 'state'
+              },
+              {
+                width: 150,
+                headerLabel: 'zip'
+              },
+              {
+                width: 150,
+                id: 'phone1'
+              },
+              {
+                width: 150,
+                headerLabel: 'phone2'
+              },
+              {
+                width: 150,
+                id: 'email'
+              },
+              {
+                width: 150,
+                headerLabel: 'web'
+              }
+            ],
+            defaults : function () {
+              return {
+                first_name: '',
+                last_name: '',
+                company_name: '',
+                address: '',
+                city: '',
+                county: '',
+                state: '',
+                zip: '',
+                phone1: '',
+                phone2: '',
+                email: '',
+                web: ''
+              };
+            }
+        }).render();
+
+      getFetcher = function( type, idx, options ) {
+        var lookup = {
+              collection: function( resolve, reject, idx, options ) {
+                grid1.fetch( _.defaults( {
+                  reset: true,
+                  contentType: 'application/xml',
+                  success: function ( collection, response, options ) {
+                    console.log('success');
+                    resolve( response );
+                  },
+                  error: function ( collection, response, options ) {
+                    console.log('error');
+                    debugger;
+                    reject( Error( "[" + collection.url + "] " + response.statusText ) );
+                  }
+                }, options ) );
+              },
+              model: function( resolve, reject, idx, options ) {
+                grid1.fetch( idx, _.defaults( {
+                  reset: true,
+                  contentType: 'application/xml',
+                  success: function ( collection, response, options ) {
+                    console.log('success');
+                    resolve( response );
+                  },
+                  error: function ( collection, response, options ) {
+                    console.log('error');
+                    debugger;
+                    reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
+                  }
+                }, options ) );
+              }
+            },
+            def = function() {};
+
+        return new Promise( function( resolve, reject ) {
+          lookup[type] ? lookup[type]( resolve, reject, idx, options ) : def();
+        });
+      };
+
+      commonConf = {
+        contentType: 'application/xml'
+      };
+
+      getFetcher( 'collection', null, {
+        data: { target: 'all', test: '1234' },
+        converter: {
+          json2xml_str: proworksConverter.json2xml_str,
+          xml2json: proworksConverter.xml2json
+        },
+        rootAttrs: {
+          _task: 'DummyTask',
+          _action: 'fetch'
+        }
+      }).then( function(response) {
+          console.log( 'SUCCESS', response.length );
+        }, function(error) {
+          console.error( 'FAIL', error );
+      })
+      .then( function (response) {
+        data = { phone1: '111-111-1111', phone2: '222-222-2222' };
+
+        // not ready server, only check request data
+        grid1.row(0).set( 'data', data, _.extend( {
+          save: true,
+          saved: true,
+          rootName: 'model',
+          rootAttrs: {
+            _task: 'DummyTask',
+            _action: 'update'
+          },
+          success: function( model, response, options ) {
+            console.log( 'first update phone number result = ' + response._result );
+          }
+        }, commonConf ) );
+        console.log( 'change phone1 and phone2' );
+      });
+    </script>
+  </body>
+</html>
