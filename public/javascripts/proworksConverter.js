@@ -57,37 +57,60 @@ var proworksConverter = ( function() {
     return result;
   };
 
-  var convertFromValueAttr = function( model ) {
+  var convertFromValueAttr = function( model, options ) {
+    var isSkip = false;
     _.each( model, function( value, key, obj ) {
+      isSkip = false;
       if ( _.isObject(value) ) {
-        obj[key] = value._value;
+        _.each( value, function( value2, key2 ) {
+          if ( !isSkip ) {
+            if ( key2 === '_value' ) {
+              obj[key] = value2;
+            } else if ( _.isObject(value2) ) {
+              isSkip = true;
+              obj[key] = xml2json( value, options, true );
+            }
+          }
+        });
       }
     });
     return model;
   };
 
-  var xml2json = function( data, options ) {
+  var isSingular = function(obj) {
+    return !(obj.vector && obj.vector.data) ? true : _.isArray(obj.vector.data) ? false : true;
+  };
+
+  var xml2json = function( data, options, isNotRoot ) {
     var result,
-        value,
-        singular;
+        singular,
+        value;
 
     if ( options.defaultXMLConverter ) {
-      x2js = options.defaultXMLConverter;
+      if ( isNotRoot ) {
+        result = data;
+      } else {
+        x2js = options.defaultXMLConverter;
+        result = x2js.xml2json( data );
+      }
 
-      result = x2js.xml2json( data );
-      singular = !(result.vector && result.vector.data) ? true : _.isArray(result.vector.data) ? false : true;
+      singular = isSingular(result);
 
       if ( singular ) {
-        value = result[_.keys(result)[0]];
-        if ( _.isObject(value) ) {
-          result = value;
-          convertFromValueAttr(result);
+        if ( !isNotRoot ) {
+          value = result[_.keys(result)[0]];
+          if ( _.isObject(value) ) {
+            result = value;
+          } else {
+            return result;
+          }
         }
+        convertFromValueAttr( result, options );
       } else {
         result = result.vector.data;
         result = _.map( result, function( item, idx, list ) {
           list[idx] = item[_.keys(item)[0]];
-          convertFromValueAttr(list[idx]);
+          convertFromValueAttr( list[idx], options );
           return list[idx];
         });
       }
