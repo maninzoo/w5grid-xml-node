@@ -3,15 +3,15 @@
   <head>
     <title>W5 - Fetch Promises Test</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="stylesheets/w5.css">
+    <link rel="stylesheet" href="w5/dist/css/w5.css">
   </head>
   <body style="border:0; margin:0">
     <div id='grid1'></div>
-    <script src="jquery/dist/jquery.js"></script>
+    <script src="jquery/jquery.js"></script>
     <script src="underscore/underscore.js"></script>
     <script src="backbone/backbone.js"></script>
     <script src="x2js/xml2json.js"></script>
-    <script src="javascripts/w5.js"></script>
+    <script src="w5/dist/js/1.0.1/w5.js"></script>
     <script src="javascripts/proworksConverter.js"></script>
     <script type="text/javascript">
       var getFetcher,
@@ -103,41 +103,6 @@
               };
             }
         }).render();
-
-      data = [
-        {
-          "first_name": "James",
-          "last_name": "Butt",
-          "company_name": "Benton, John B Jr",
-          "address": "6649 N Blue Gum St",
-          "city": "New Orleans",
-          "county": "Orleans",
-          "state": "LA",
-          "zip": "70116",
-          "phone1": "504-621-8927",
-          "phone2": "504-845-1427",
-          "email": "jbutt@gmail.com",
-          "web": "http://www.bentonjohnbjr.com"
-        },
-        {
-          "first_name": "Art",
-          "last_name": "Venere",
-          "company_name": "Chemel, James L Cpa",
-          "address": "8 W Cerritos Ave #54",
-          "city": "Bridgeport",
-          "county": "Gloucester",
-          "state": "NJ",
-          "zip": "8014",
-          "phone1": "856-636-8749",
-          "phone2": "856-264-4130",
-          "email": "art@venere.org",
-          "web": "http://www.chemeljameslcpa.com"
-        }];
-
-//      dataCols.on( 'request', function() {
-//        console.log('request');
-//        debugger;
-//      });
 
       getFetcher = function( type, idx, options ) {
         var lookup = {
