@@ -120,7 +120,6 @@
                   },
                   error: function ( collection, response, options ) {
                     console.log('error');
-                    debugger;
                     reject( Error( "[" + collection.url + "] " + response.statusText ) );
                   }
                 }, options ) );
@@ -139,7 +138,6 @@
                   },
                   error: function ( collection, response, options ) {
                     console.log('error');
-                    debugger;
                     reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
                   }
                 }, options ) );

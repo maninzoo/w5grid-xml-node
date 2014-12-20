@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>W5 - Sync Promises Test</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <link rel="stylesheet" href="w5/dist/css/w5.css">
+  </head>
+  <body style="border:0; margin:0">
+    <div id='grid1'></div>
+    <script src="jquery/jquery.js"></script>
+    <script src="underscore/underscore.js"></script>
+    <script src="backbone/backbone.js"></script>
+    <script src="x2js/xml2json.js"></script>
+    <script src="w5/dist/js/1.0.1/w5.js"></script>
+    <script src="javascripts/proworksConverter.js"></script>
+    <script type="text/javascript">
+      var getSyncer,
+          commonConf,
+          data,
+          Model = Backbone.Model.extend( {
+            url: function() {
+              return '/users3';
+            }
+          } ),
+          List = Backbone.Collection.extend( { model: Model, url: '/users3', compoundURL: '/users3' } ),
+          grid1 = new w5.Grid({
+            el : "#grid1",
+            option: {
+              width : "650px",
+              height : "400px",
+              caption : "Promises",
+              rowNum : 10
+            },
+            collection : new List(),
+            emulateHTTP: true,
+            xmlConverter: new X2JS(),
+            colModel : [
+              {
+                width: 150,
+                id: 'first_name'
+              },
+              {
+                width: 150,
+                id: 'last_name'
+              },
+              {
+                width: 150,
+                headerLabel: 'company_name'
+              },
+              {
+                width: 150,
+                headerLabel: 'address'
+              },
+              {
+                width: 150,
+                id: 'city'
+              },
+              {
+                width: 150,
+                id: 'county'
+              },
+              {
+                width: 150,
+                id: 'state'
+              },
+              {
+                width: 150,
+                headerLabel: 'zip'
+              },
+              {
+                width: 150,
+                id: 'phone1'
+              },
+              {
+                width: 150,
+                headerLabel: 'phone2'
+              },
+              {
+                width: 150,
+                id: 'email'
+              },
+              {
+                width: 150,
+                headerLabel: 'web'
+              }
+            ],
+            defaults : function () {
+              return {
+                first_name: '',
+                last_name: '',
+                company_name: '',
+                address: '',
+                city: '',
+                county: '',
+                state: '',
+                zip: '',
+                phone1: '',
+                phone2: '',
+                email: '',
+                web: ''
+              };
+            }
+        }).render();
+
+      commonConf = {
+        contentType: 'application/xml'
+      };
+
+      getSyncer = function( type, options ) {
+        var lookup = {
+          fetch: function( resolve, reject ) {
+            grid1.fetch( _.extend( {
+              reset: true,
+              data: { target: 'all' },
+              rootName: 'fetch',
+              targetPath: 'response.userList',
+              success: function ( collection, response, options ) {
+                resolve( response );
+              },
+              error: function ( collection, response, options ) {
+                reject( Error( "[" + collection.url + "]" ) );
+              }
+            }, commonConf, options ) );
+          },
+          sync: function( resolve, reject, options ) {
+            grid1.syncData( _.extend( options, {
+              reset: true,
+              rootName: 'sync',
+              success: function ( response, status, options ) {
+                resolve( response.response );
+              },
+              error: function ( collection, response, options ) {
+                reject( Error( "[" + this.url + "]" ) );
+              }
+            }, commonConf ) );
+          }
+        },
+        def = function() {};
+
+        return new Promise( function( resolve, reject ) {
+          lookup[type] ? lookup[type]( resolve, reject, options ) : def();
+        });
+      };
+
+      getSyncer('fetch').then( function(response) {
+        console.log( 'SUCCESS', response.length );
+      }, function(error) {
+        console.error( 'FAIL', error );
+      }).then( function (response) {
+        grid1.addRow( 0, { first_name: 'A' } );
+        grid1.cell( 2, 1 ).set( 'data', 'BP' );
+        grid1.removeRow(3);
+        grid1.removeRow(10);
+        grid1.cell( 6, 1 ).set( 'data', 'TD' );
+        grid1.addRow( 4, { first_name: 'B' } );
+        console.log( 'multiple modification' );
+
+        return getSyncer( 'sync', { saved: true, modified: true } );
+      } ).then( function (response) {
+        console.log( JSON.stringify(response) );
+
+        grid1.addRow( 0, { first_name: 'C' } );
+        grid1.removeRow(3);
+        console.log( 'create & delete' );
+
+        return getSyncer( 'sync', { pick: true, saved: true, modified: true, excludeCreate: true, excludeUpdate: true } );
+      }, function( error ) {
+        console.error( 'FAIL', error );
+      }).then( function (response) {
+        console.log( response );
+
+        return getSyncer( 'sync', { pick: true, saved: true, modified: true, excludeUpdate: true, afterProcess: true } );
+      }).then( function (response) {
+        console.log( response );
+      });
+    </script>
+  </body>
+</html>

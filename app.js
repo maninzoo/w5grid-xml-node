@@ -9,6 +9,7 @@ var xmlparser = require('express-xml-bodyparser');
 var routes = require('./routes/index');
 var users = require('./routes/users');
 var users2 = require('./routes/users2');
+var users3 = require('./routes/users3');
 
 var app = express();
 
@@ -20,8 +21,8 @@ app.set('view engine', 'jade');
 //app.use(favicon(__dirname + '/public/favicon.ico'));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(xmlparser());
+app.use(bodyParser.urlencoded( { extended: false } ) );
+app.use(xmlparser( { normalizeTags: false } ) );
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'components')));
 app.use(express.static(path.join(__dirname, 'public')));
@@ -29,6 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', routes);
 app.use('/users', users);
 app.use('/users2', users2);
+app.use('/users3', users3);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

@@ -3,15 +3,15 @@
   <head>
     <title>W5 - Fetch Promises Test</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" href="stylesheets/w5.css">
+    <link rel="stylesheet" href="w5/dist/css/w5.css">
   </head>
   <body style="border:0; margin:0">
     <div id='grid1'></div>
-    <script src="jquery/dist/jquery.js"></script>
+    <script src="jquery/jquery.js"></script>
     <script src="underscore/underscore.js"></script>
     <script src="backbone/backbone.js"></script>
     <script src="x2js/xml2json.js"></script>
-    <script src="javascripts/w5.js"></script>
+    <script src="w5/dist/js/1.0.1/w5.js"></script>
     <script src="javascripts/proworksConverter.js"></script>
     <script type="text/javascript">
       var getFetcher,
@@ -19,12 +19,11 @@
           data,
           List = Backbone.Collection.extend( {
             model: Backbone.Model.extend( {
-              idAttribute: "first_name",
               url: function() {
-                return '/users';
+                return '/users3';
               }
             } ),
-            url: '/users' } ),
+            url: '/users3' } ),
           grid1 = new w5.Grid({
             el : "#grid1",
             option: {
@@ -125,14 +124,14 @@
                 grid1.fetch( idx, _.defaults( {
                   reset: true,
                   contentType: 'application/xml',
-                  success: function ( collection, response, options ) {
+                  success: function ( model, response, options ) {
                     console.log('success');
                     resolve( response );
                   },
-                  error: function ( collection, response, options ) {
+                  error: function ( model, response, options ) {
                     console.log('error');
                     debugger;
-                    reject( Error( "[" + model.collection.url + "/" + model._id + "] " + response.statusText ) );
+                    reject( Error( "[" + model.collection.url + "/" + model.id + "] " + response.statusText ) );
                   }
                 }, options ) );
               }
@@ -149,37 +148,70 @@
       };
 
       getFetcher( 'collection', null, {
-        data: { target: 'all', test: '1234' },
-        converter: {
-          json2xml_str: proworksConverter.json2xml_str,
-          xml2json: proworksConverter.xml2json
-        },
-        rootAttrs: {
-          _task: 'DummyTask',
-          _action: 'fetch'
-        }
+        data: { target: 'all' },
+        rootName: 'fetch',
+        targetPath: 'response.userList'
+//        targetPath: function(obj) {
+//          return obj.response.userList;
+//        }
       }).then( function(response) {
           console.log( 'SUCCESS', response.length );
         }, function(error) {
           console.error( 'FAIL', error );
-      })
-      .then( function (response) {
+      }).then( function (response) {
+        grid1.cell(0,0).set('data', 'Ruud');
+        console.log( 'firstName is changed', grid1.cell(0,0).get('data') );
+      }).then( function (response) {
+        return getFetcher( 'model', 0, {
+          data: { target: 0 },
+          rootName: 'fetch',
+          targetPath: 'userList'
+        } );
+      }).then( function (response) {
         data = { phone1: '111-111-1111', phone2: '222-222-2222' };
 
-        // not ready server, only check request data
         grid1.row(0).set( 'data', data, _.extend( {
           save: true,
           saved: true,
-          rootName: 'model',
-          rootAttrs: {
-            _task: 'DummyTask',
-            _action: 'update'
-          },
+          rootName: 'update',
           success: function( model, response, options ) {
-            console.log( 'first update phone number result = ' + response._result );
+            console.log( 'first update phone number result = ' + response.result );
           }
         }, commonConf ) );
         console.log( 'change phone1 and phone2' );
+
+        return getFetcher( 'model', 0, {
+          data: { target: 0 },
+          rootName: 'fetch',
+          targetPath: 'userList'
+        } );
+      }).then( function(response) {
+        console.log( 'patch phone1 and phone2 ', _.pick( response, ['phone1', 'phone2'] ) );
+
+        data = { "first_name": "shye", "last_name": "lee", "company_name": "inswave",
+          "address": "guro", "city": "seoul", "county": "korea", "state": "guro", "zip": "1234",
+          "phone1": "123-456-1234", "phone2": "789-123-4567",
+          "email": "shye0919@inswave.com", "web": "http://www.inswave.com" };
+
+        return new Promise( function( resolve, reject ) {
+          grid1.addRow( data, _.extend( {
+            save: true,
+            rootName: 'create',
+            success: function ( model, response, options ) {
+              console.log( 'create a Row ', _.omit( response.userList, 'id' ) );
+              resolve();
+            }
+          }, commonConf ) );
+        } );
+      }).then( function (response) {
+        grid1.removeRow( 1, _.extend( {
+          data: { target: 1 },
+          destroy: true,
+          rootName: 'delete',
+          success: function ( model, response, options ) {
+            console.log( 'removed the Row ', response.result );
+          }
+        }, commonConf ) );
       });
     </script>
   </body>
